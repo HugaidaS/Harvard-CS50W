@@ -1,0 +1,17 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>{{ category.name }}</h2>
+        <!-- if the length of listings is greater than 0, print the list of links, otherwise show system message -->
+        {% if listings %}
+        <ul>
+            {% for listing in listings %}
+                <li>
+                    <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p>No listings in this category</p>
+        {% endif %}
+{% endblock %}

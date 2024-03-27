@@ -1,0 +1,26 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>{{ listing.title }}</h2>
+    <!-- If current user is an author, show edit button -->
+    {% if isUserAuthor %}
+        <a href="{% url 'edit' listing.id %}">Edit Listing</a>
+    {% endif %}
+    <p>Author: {{ listing.author }}</p>
+    <p>Status: {{ listing.status }}</p>
+    <img src="{{ listing.image_url }}" alt="Image of {{ listing.title }}">
+    <p>Category: {{ listing.category }}</p>
+    <p>Description: {{ listing.description }}</p>
+    <p>Starting bid: ${{ listing.starting_bid }}</p>
+    <p>Current bid: ${{ listing.current_bid }}</p>
+    <!--Creation date -->
+    <p>Created on: {{ listing.creation_date }}</p>
+
+    <!--If the user is the author of the listing, show a link to edit the listing -->
+    {% if user.is_authenticated and user.username == listing.author %}
+        <a href="{% url 'edit' listing.id %}">Edit Listing</a>
+    {% endif %}
+
+
+
+{% endblock %}

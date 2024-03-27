@@ -7,14 +7,29 @@ class User(AbstractUser):
     watchlist = models.ManyToManyField('Listing', blank=True)
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+LISTING_STATUS= (
+    ('active', 'Active'),
+    ('closed', 'Closed'),
+    ('sold', 'Sold')
+)
+
 class Listing(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    price = models.FloatField()
+    starting_bid = models.FloatField()
+    status = models.CharField(max_length=10, choices=LISTING_STATUS, default='active')
+    current_bid = models.FloatField(blank=True, null=True, default=0)
     creation_date = models.DateTimeField(default=timezone.now)
     image_url = models.URLField(blank=True)
-    category = models.CharField(max_length=100)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='listings')
 
     def __str__(self):
         return self.title
