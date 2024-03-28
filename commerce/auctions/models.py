@@ -26,7 +26,6 @@ class Listing(models.Model):
     description = models.TextField(blank=True)
     starting_bid = models.FloatField()
     status = models.CharField(max_length=10, choices=LISTING_STATUS, default='active')
-    current_bid = models.FloatField(blank=True, null=True, default=0)
     creation_date = models.DateTimeField(default=timezone.now)
     image_url = models.URLField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='listings')
@@ -42,7 +41,7 @@ class Bid(models.Model):
     date = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Bid of {self.value} on {self.listing_item.title}"
+        return f"{self.value}"
 
 
 class Comment(models.Model):

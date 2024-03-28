@@ -3,11 +3,15 @@
 {% block body %}
     <h2>Active Listings</h2>
     <!--    render the list of active listings -->
-    <ul>
-        {% for listing in listings %}
-            <li>
-                <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
-            </li>
-        {% endfor %}
-    </ul>
+        {% if listings %}
+            {% for listing in listings %}
+                <ul>
+                    <li>
+                        <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
+                    </li>
+                </ul>
+            {% endfor %}
+        {% else %}
+            <p>No active listings.</p>
+        {% endif %}
 {% endblock %}

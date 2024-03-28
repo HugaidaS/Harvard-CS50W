@@ -7,7 +7,7 @@ from django import forms
 
 
 from .forms import ListingForm
-from .models import User, Category, Listing, LISTING_STATUS
+from .models import User, Category, Listing, LISTING_STATUS, Comment, Bid
 
 
 def index(request):
@@ -98,7 +98,20 @@ def create(request):
 def listing(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     isUserAuthor = request.user == listing.author
-    return render(request, 'auctions/listing.html', {'listing': listing, 'isUserAuthor': isUserAuthor})
+    isOnWatchList = False
+    comments = Comment.objects.filter(listing_item=listing)
+    current_bid = Bid.objects.filter(listing_item=listing).order_by('-value').first()
+
+    if request.user.is_authenticated:
+        isOnWatchList = request.user.watchlist.filter(id=listing_id)
+
+    return render(request, 'auctions/listing.html', {
+    'listing': listing,
+    'isUserAuthor': isUserAuthor,
+    'isOnWatchList': isOnWatchList,
+    'comments': comments,
+    'current_bid': current_bid if current_bid else listing.starting_bid
+    })
 
 def edit_listing(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
@@ -110,16 +123,6 @@ def edit_listing(request, listing_id):
     else:
         form = ListingForm(instance=listing, author=request.user)
     return render(request, 'auctions/edit_listing.html', {'form': form, 'listing': listing})
-
-def add_watchlist(request, listing_id):
-    listing = Listing.objects.get(id=listing_id)
-    request.user.watchlist.add(listing)
-    return redirect('listing', listing_id=listing_id)
-
-def remove_watchlist(request, listing_id):
-    listing = Listing.objects.get(id=listing_id)
-    request.user.watchlist.remove(listing)
-    return redirect('listing', listing_id=listing_id)
 
 # edit or create comment
 def comment(request, listing_id):
@@ -136,17 +139,21 @@ def bid(request, listing_id):
         Bid.objects.create(listing_item=listing, bidder=request.user, value=bid)
     return redirect('listing', listing_id=listing_id)
 
-def update_status(request, listing_id, status):
-    listing = Listing.objects.get(id=listing_id)
-    listing.status = status
-    listing.save()
-    return redirect('index')
-
 def delete(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     listing.delete()
     return redirect('index')
 
+def add_to_watchlist(request, listing_id):
+    listing = Listing.objects.get(id=listing_id)
+    request.user.watchlist.add(listing)
+    return redirect('listing', listing_id=listing_id)
+
+def remove_from_watchlist(request, listing_id):
+    listing = Listing.objects.get(id=listing_id)
+    request.user.watchlist.remove(listing)
+    return redirect('listing', listing_id=listing_id)
+
 def watchlist(request):
     watchlist = request.user.watchlist.all()
-    return render(request, 'auctions/watchlist.html', {'watchlist': watchlist})
+    return render(request, 'auctions/index.html', {'listings': watchlist})
