@@ -1,0 +1,30 @@
+{% extends "auctions/layout.html" %}
+
+# user profile page with user's listings and watchlist
+
+{% block body %}
+    <h2>{{ user.username }}</h2>
+    <p>Email: {{user.email}}</p>
+    <p>Join date: {{user.date_joined}}</p>
+
+    {% if listings %}
+        <h3>Listings</h3>
+        <ul>
+            {% for listing in listings %}
+                <li>
+                    <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if watchlist %}
+        <h3>Watchlist</h3>
+        <ul>
+            {% for listing in watchlist %}
+                <li>
+                    <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

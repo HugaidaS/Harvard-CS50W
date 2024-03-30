@@ -1,10 +1,69 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
+<div class="container mt-4">
     <h2>Edit Listing</h2>
-    <form action="{% url 'edit' listing.id %}" method="post">
+    <form action="{% url 'edit' listing.id %}" method="post" class="mt-4">
         {% csrf_token %}
-        {{ form.as_p }}
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">Title</label>
+            <input type="text" id="{{ form.title.id_for_label }}" name="{{ form.title.html_name }}" class="form-control" value="{{ form.title.value|default_if_none:'' }}">
+            {% if form.title.errors %}
+                <div class="alert alert-danger">
+                    {{ form.title.errors }}
+                </div>
+            {% endif %}
+
+            <!-- Repeat for other fields -->
+            <label for="{{ form.description.id_for_label }}">Description</label>
+            <textarea id="{{ form.description.id_for_label }}" name="{{ form.description.html_name }}" class="form-control">{{ form.description.value|default_if_none:'' }}</textarea>
+            {% if form.description.errors %}
+                <div class="alert alert-danger">
+                    {{ form.description.errors }}
+                </div>
+            {% endif %}
+
+            <label for="{{ form.starting_bid.id_for_label }}">Starting Bid</label>
+            <input type="number" id="{{ form.starting_bid.id_for_label }}" name="{{ form.starting_bid.html_name }}" class="form-control" value="{{ form.starting_bid.value|default_if_none:'' }}">
+            {% if form.starting_bid.errors %}
+                <div class="alert alert-danger">
+                    {{ form.starting_bid.errors }}
+                </div>
+            {% endif %}
+
+            <label for="{{ form.status.id_for_label }}">Status</label>
+            <select id="{{ form.status.id_for_label }}" name="{{ form.status.html_name }}" class="form-control">
+                {% for choice in form.status.field.choices %}
+                    <option value="{{ choice.0 }}" {% if form.status.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                {% endfor %}
+            </select>
+            {% if form.status.errors %}
+                <div class="alert alert-danger">
+                    {{ form.status.errors }}
+                </div>
+            {% endif %}
+
+            <label for="{{ form.image_url.id_for_label }}">Image URL</label>
+            <input type="url" id="{{ form.image_url.id_for_label }}" name="{{ form.image_url.html_name }}" class="form-control" value="{{ form.image_url.value|default_if_none:'' }}">
+            {% if form.image_url.errors %}
+                <div class="alert alert-danger">
+                    {{ form.image_url.errors }}
+                </div>
+            {% endif %}
+
+            <label for="{{ form.category.id_for_label }}">Category</label>
+            <select id="{{ form.category.id_for_label }}" name="{{ form.category.html_name }}" class="form-control">
+                {% for choice in form.category.field.choices %}
+                    <option value="{{ choice.0 }}" {% if form.category.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                {% endfor %}
+            </select>
+            {% if form.category.errors %}
+                <div class="alert alert-danger">
+                    {{ form.category.errors }}
+                </div>
+            {% endif %}
+        </div>
         <input class="btn btn-primary" type="submit" value="Edit Listing">
     </form>
+</div>
 {% endblock %}

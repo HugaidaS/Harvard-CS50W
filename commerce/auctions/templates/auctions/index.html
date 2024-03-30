@@ -2,16 +2,36 @@
 
 {% block body %}
     <h2>Active Listings</h2>
-    <!--    render the list of active listings -->
+    <!-- render the list of active listings -->
+    <div class="row">
         {% if listings %}
             {% for listing in listings %}
-                <ul>
-                    <li>
-                        <a href="{% url 'listing' listing.id %}">{{ listing.title }}</a>
-                    </li>
-                </ul>
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="row no-gutters">
+                            <div class="col-md-4">
+                                {% if listing.image_url %}
+                                    <img src="{{ listing.image_url }}" class="card-img" alt="Image of {{ listing.title }}" style="width: 100%; max-height: 250px; object-fit: cover; object-position: top">
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title"><a href="{% url 'listing' listing.id %}">{{ listing.title }}</a></h5>
+                                    <p class="card-text">Author: <a href="{% url 'profile' listing.author.id %}">{{ listing.author }}</a></p>
+                                    <p class="card-text">Starting bid: ${{ listing.starting_bid }}</p>
+                                    <p class="card-text">Created: {{ listing.creation_date }}</p>
+                                    {% if listing.current_bid %}
+                                        <p class="card-text">Current bid: ${{ listing.current_bid }}</p>
+                                    {% endif %}
+                                    <p class="card-text">Category: <a href="{% url 'category' listing.category.id %}">{{ listing.category }}</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             {% endfor %}
         {% else %}
-            <p>No active listings.</p>
+            <p class="ml-4">No active listings</p>
         {% endif %}
+    </div>
 {% endblock %}

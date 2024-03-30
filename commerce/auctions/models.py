@@ -14,11 +14,11 @@ class Category(models.Model):
         return self.name
 
 
-LISTING_STATUS= (
+LISTING_STATUS = (
     ('active', 'Active'),
     ('closed', 'Closed'),
-    ('sold', 'Sold')
 )
+
 
 class Listing(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
@@ -29,6 +29,7 @@ class Listing(models.Model):
     creation_date = models.DateTimeField(default=timezone.now)
     image_url = models.URLField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='listings')
+    winner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='won_listings', blank=True, null=True)
 
     def __str__(self):
         return self.title
