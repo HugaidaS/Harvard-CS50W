@@ -17,11 +17,11 @@
     {% endif %}
     <!-- if the listing status is closed and there is no winner, display system message that the listing was closed without winner -->
     {% if listing.status == 'closed' %}
-        {% if winner.id == user.id %}
+        {% if listing.winner.id == request.user.id %}
             <div class="alert alert-success">
                 You are the winner of this auction!
             </div>
-        {% elif winner.id != request.user.id %}
+        {% elif listing.winner.id != request.user.id %}
             <div class="alert alert-success">
                 Winner for this auction is <a href="{% url 'profile' listing.winner.id %}">{{ listing.winner.username }}</a>
             </div>

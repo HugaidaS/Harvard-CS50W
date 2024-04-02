@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
@@ -75,6 +76,7 @@ def categories(request):
         "categories": categories
     })
 
+
 def category(request, category_id):
     category = Category.objects.get(id=category_id)
     listings = Listing.objects.filter(category=category)
@@ -83,6 +85,8 @@ def category(request, category_id):
         "category": category
     })
 
+
+@login_required(login_url='login')
 def create(request):
     categories = Category.objects.all()
     if request.method == 'POST':
@@ -99,7 +103,8 @@ def create(request):
         # Validate the form data
         if not title or not description or not starting_bid or not image_url or not category_id:
             # One or more fields are missing
-            return render(request, 'auctions/create.html', {'error': 'All fields are required.', 'categories': categories})
+            return render(request, 'auctions/create.html',
+                          {'error': 'All fields are required.', 'categories': categories})
 
         try:
             category = Category.objects.get(id=category_id)
@@ -108,7 +113,8 @@ def create(request):
             return render(request, 'auctions/create.html', {'error': 'Invalid category.', 'categories': categories})
 
         # Save the form data to the database
-        listing = Listing(title=title, description=description, starting_bid=starting_bid, status=status, image_url=image_url, category=category, author=request.user)
+        listing = Listing(title=title, description=description, starting_bid=starting_bid, status=status,
+                          image_url=image_url, category=category, author=request.user)
         listing.save()
 
         return redirect('listing', listing_id=listing.id)
@@ -130,17 +136,16 @@ def listing(request, listing_id):
         isOnWatchList = request.user.watchlist.filter(id=listing_id)
 
     return render(request, 'auctions/listing.html', {
-    'listing': listing,
-    'isUserAuthor': isUserAuthor,
-    'isOnWatchList': isOnWatchList,
-    'comments': comments,
-    'current_bid': current_bid if current_bid else listing.starting_bid,
-    'current_bidder': current_bidder,
-    'total_bids': total_bids
+        'listing': listing,
+        'isUserAuthor': isUserAuthor,
+        'isOnWatchList': isOnWatchList,
+        'comments': comments,
+        'current_bid': current_bid if current_bid else listing.starting_bid,
+        'current_bidder': current_bidder,
+        'total_bids': total_bids
     })
 
-from django.core.exceptions import ValidationError
-
+@login_required(login_url='login')
 def edit_listing(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     if request.method == 'POST':
@@ -185,6 +190,7 @@ def edit_listing(request, listing_id):
     return render(request, 'auctions/edit_listing.html', {'form': form, 'listing': listing})
 
 
+@login_required(login_url='login')
 def close_listing(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
 
@@ -209,6 +215,7 @@ def close_listing(request, listing_id):
 
 
 # edit or create comment
+@login_required(login_url='login')
 def comment(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     if request.method == 'POST':
@@ -224,6 +231,7 @@ def comment(request, listing_id):
     return redirect('listing', listing_id=listing_id)
 
 
+@login_required(login_url='login')
 def bid(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     if request.method == 'POST':
@@ -257,24 +265,32 @@ def bid(request, listing_id):
 
     return redirect('listing', listing_id=listing_id)
 
+
+@login_required(login_url='login')
 def delete(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     listing.delete()
     return redirect('index')
 
+
+@login_required(login_url='login')
 def add_to_watchlist(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     request.user.watchlist.add(listing)
     return redirect('listing', listing_id=listing_id)
 
+
+@login_required(login_url='login')
 def remove_from_watchlist(request, listing_id):
     listing = Listing.objects.get(id=listing_id)
     request.user.watchlist.remove(listing)
     return redirect('listing', listing_id=listing_id)
 
+
 def watchlist(request):
     watchlist = request.user.watchlist.all()
     return render(request, 'auctions/index.html', {'listings': watchlist})
+
 
 def profile(request, user_id):
     user = User.objects.get(id=user_id)
