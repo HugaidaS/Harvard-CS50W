@@ -1,0 +1,42 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <h1>{{ user.username }}</h1>
+    <p>{{ user.email }}</p>
+    <p>{{ user.date_joined }}</p>
+
+    {% if user.id != request.user.id %}
+        {% if not is_following %}
+            <form action="#" method="post">
+                <button>Follow</button>
+            </form>
+        {% else %}
+            <form action="#" method="post">
+                <button>Unfollow</button>
+            </form>
+        {% endif %}
+    {% endif %}
+
+    <h1>Following</h1>
+    <ul>
+        {% for user in following %}
+            <li>{{ user.username }}</li>
+        {% endfor %}
+    </ul>
+
+    <h1>Followers</h1>
+    <ul>
+        {% for user in followers %}
+            <li>{{ user.username }}</li>
+        {% endfor %}
+    </ul>
+    
+    <h1>Posts</h1>
+    <ul>
+        {% for post in posts %}
+            <li>
+{#                <a href="{% url 'network:post' post.id %}">{{ post.content }}</a>#}
+                <p>{{ post.date_posted }}</p>
+            </li>
+        {% endfor %}
+{% endblock %}

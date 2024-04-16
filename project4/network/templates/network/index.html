@@ -1,5 +1,71 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-    TODO
+    <h1>All Posts</h1>
+    
+    {# Post form #}
+    <form action="/post" method="post">
+        {% csrf_token %}
+        <textarea name="content" rows="3" cols="50" placeholder="What's on your mind?"></textarea>
+        <input type="submit" value="Post">
+    </form>
+    
+    {# Posts #}
+    <div id="posts">
+        {% for post in posts %}
+            <div class="post">
+                <a href="{{ post.user.id }}">{{ post.user.username }}</a>
+                <p>{{ post.content }}</p>
+                <p>{{ post.timestamp }}</p>
+                <button class="like" data-post="{{ post.id }}">
+                    {% if is_liked_by_user %}
+                        Unlike
+                    {% else %}
+                        Like
+                    {% endif %}
+                </button>
+                <p class="likes">{{ post_likes }} likes</p>
+            
+                {# Edit button #}
+                {% if post.user.id == request.user.id %}
+                    <button class="edit" data-post="{{ post.id }}">Edit</button>
+                {% endif %}
+            </div>
+        {% endfor %}
+    
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.like').forEach(function(button) {
+                button.onclick = function() {
+                    const post_id = button.dataset.post;
+                    fetch(`/like/${post_id}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        button.nextElementSibling.innerHTML = data.likes + ' likes';
+                        button.innerHTML = data.is_liked_by_user ? 'Unlike' : 'Like';
+                    });
+                };
+            });
+        });
+    </script>
+    </div>
 {% endblock %}
