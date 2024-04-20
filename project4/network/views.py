@@ -1,27 +1,25 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.urls import reverse
-
 from .models import User, Post, Like
 
 
 def index(request):
     posts = Post.objects.all().order_by("-created_at")
-    post_likes = 0
-    is_liked_by_user = False
-    for current_post in posts:
-        post_likes = current_post.like_set.count()
+    posts_with_likes = get_posts_with_likes(posts, request)
 
-        if request.user.is_authenticated:
-            try:
-                Like.objects.get(user=request.user, post=current_post)
-                is_liked_by_user = True
-            except Like.DoesNotExist:
-                is_liked_by_user = False
+    paginator = Paginator(posts_with_likes, 3)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "network/index.html", {
-        "posts": posts, "post_likes": post_likes, "is_liked_by_user": is_liked_by_user})
+        "page_obj": page_obj
+    })
 
 
 def login_view(request):
@@ -80,12 +78,16 @@ def profile(request, user_id):
     user = User.objects.get(id=user_id)
     followers = user.followers.all()
     following = user.following.all()
-    posts = Post.objects.filter(user=user).order_by("-created_at")
+    # latest 5 posts
+    posts = Post.objects.filter(user=user).order_by("-created_at")[:3]
+
+    posts_with_likes = get_posts_with_likes(posts, request)
+
     return render(request, "network/profile.html", {
         "user": user,
         "followers": followers,
         "following": following,
-        "posts": posts,
+        "posts": posts_with_likes,
     })
 
 
@@ -100,7 +102,11 @@ def post(request):
 
 def like(request, post_id):
     if request.method == "POST":
-        new_post = Post.objects.get(id=post_id)
+        try:
+            new_post = Post.objects.get(id=post_id)
+        except ObjectDoesNotExist:
+            return JsonResponse({'error': 'Post not found'}, status=404)
+
         user = request.user
         try:
             user_like = Like.objects.get(user=user, post=new_post)
@@ -120,8 +126,75 @@ def like(request, post_id):
 
 
 def edit(request, post_id):
-    if request.method == "PUT":
-        post = Post.objects.get(id=post_id)
-        post.content = request.POST["content"]
-        post.save()
+    if request.method == "POST":
+        updated_post = Post.objects.get(id=post_id)
+        new_content = request.POST.get("content", "")
+        print(new_content)
+        updated_post.content = new_content
+        updated_post.save()
         return HttpResponseRedirect(reverse("index"))
+
+
+def follow(request, user_id):
+    if request.method == "POST":
+        user = User.objects.get(id=user_id)
+        current_user = request.user
+        try:
+            current_user.following.get(id=user_id)
+            current_user.following.remove(user)
+
+            return HttpResponseRedirect(reverse("profile", args=(user_id,)))
+        except User.DoesNotExist:
+            current_user.following.add(user)
+            return HttpResponseRedirect(reverse("profile", args=(user_id,)))
+
+
+def unfollow(request, user_id):
+    if request.method == "POST":
+        user = User.objects.get(id=user_id)
+        current_user = request.user
+        try:
+            current_user.following.get(id=user_id)
+            current_user.following.remove(user)
+
+            return HttpResponseRedirect(reverse("profile", args=(user_id,)))
+        except User.DoesNotExist:
+            print("User does not exist")
+            return HttpResponseRedirect(reverse("profile", args=(user_id,)))
+
+
+def get_posts_with_likes(posts, request):
+    posts_with_likes = []
+
+    for current_post in posts:
+        post_likes = current_post.like_set.count()
+        is_liked_by_user = False
+
+        if request.user.is_authenticated:
+            is_liked_by_user = Like.objects.filter(user=request.user, post=current_post).exists()
+
+        post_data = {
+            "data": current_post,
+            "likes": post_likes,
+            "is_liked_by_user": is_liked_by_user
+        }
+        posts_with_likes.append(post_data)
+
+    return posts_with_likes
+
+
+def following(request):
+    user = request.user
+    following = user.following.all()
+    posts = Post.objects.filter(user__in=following).order_by("-created_at")
+
+    posts_with_likes = get_posts_with_likes(posts, request)
+
+    paginator = Paginator(posts_with_likes, 3)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "network/following.html", {
+        "page_obj": page_obj
+    })

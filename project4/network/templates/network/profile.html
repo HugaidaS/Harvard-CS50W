@@ -1,42 +1,84 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-    <h1>{{ user.username }}</h1>
-    <p>{{ user.email }}</p>
-    <p>{{ user.date_joined }}</p>
-
-    {% if user.id != request.user.id %}
-        {% if not is_following %}
-            <form action="#" method="post">
-                <button>Follow</button>
-            </form>
+    <div class="container">
+        <h1 class="mt-4">{{ user.username }}</h1>
+        <p>Email: {{ user.email }}</p>
+        <p>Joined At: {{ user.date_joined }}</p>
+        
+        {% if user != request.user %}
+            {% if not request.user in followers %}
+                <form action="follow/{{ user.id }}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Follow</button>
+                </form>
         {% else %}
-            <form action="#" method="post">
-                <button>Unfollow</button>
+            <form action="unfollow/{{ user.id }}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">Unfollow</button>
             </form>
         {% endif %}
-    {% endif %}
+        {% endif %}
 
-    <h1>Following</h1>
-    <ul>
-        {% for user in following %}
-            <li>{{ user.username }}</li>
-        {% endfor %}
-    </ul>
+        <h1 class="mt-4">Following</h1>
+        <ul class="list-group">
+            {% for user in following %}
+                <li class="list-group-item">
+                    <a href="{% url 'profile' user.id %}">{{ user.username }}</a>
+                </li>
+            {% endfor %}
+        </ul>
 
-    <h1>Followers</h1>
-    <ul>
-        {% for user in followers %}
-            <li>{{ user.username }}</li>
-        {% endfor %}
-    </ul>
-    
-    <h1>Posts</h1>
-    <ul>
-        {% for post in posts %}
-            <li>
-{#                <a href="{% url 'network:post' post.id %}">{{ post.content }}</a>#}
-                <p>{{ post.date_posted }}</p>
-            </li>
-        {% endfor %}
+        <h1 class="mt-4">Followers</h1>
+        <ul class="list-group">
+            {% for user in followers %}
+                <li class="list-group-item">
+                    <a href="{% url 'profile' user.id %}">{{ user.username }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+        
+        <h1 class="mt-4">Latest Posts</h1>
+        <ul class="list-group mb-3">
+            {% for post in posts %}
+                <li class="list-group-item">
+                    <p>{{ post.data.content }}</p>
+                    <p>{{ post.data.created_at }}</p>
+                    <p class="likes" data-post="{{ post.data.id }}">{{ post.likes }} likes</p>
+                    <button class="like btn btn-primary" data-post="{{ post.data.id }}">
+                        {% if post.is_liked_by_user %}
+                            Unlike
+                        {% else %}
+                            Like
+                        {% endif %}
+                    </button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+     <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          console.log('DOM loaded');
+          document.querySelectorAll('.like').forEach(button => {
+            button.onclick = function() {
+                const post = button.dataset.post;
+                fetch(`/like/${post}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        like: !button.classList.contains('liked')
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    button.innerHTML = data.is_liked_by_user ? 'Unlike' : 'Like';
+                    document.querySelector(`.likes[data-post="${post}"]`).innerHTML = `${data.likes} likes`;
+                });
+            };
+        });
+      });
+    </script>
 {% endblock %}
