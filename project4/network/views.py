@@ -12,7 +12,7 @@ def index(request):
     posts = Post.objects.all().order_by("-created_at")
     posts_with_likes = get_posts_with_likes(posts, request)
 
-    paginator = Paginator(posts_with_likes, 3)
+    paginator = Paginator(posts_with_likes, 10)
 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -76,18 +76,29 @@ def register(request):
 
 def profile(request, user_id):
     user = User.objects.get(id=user_id)
+    followers_count = user.followers.count()
+    following_count = user.following.count()
     followers = user.followers.all()
     following = user.following.all()
-    # latest 5 posts
-    posts = Post.objects.filter(user=user).order_by("-created_at")[:3]
+
+    # all users posts in chronological order
+    posts = Post.objects.filter(user=user).order_by("-created_at")
 
     posts_with_likes = get_posts_with_likes(posts, request)
 
+    paginator = Paginator(posts_with_likes, 10)
+
+    page_number = request.GET.get('page')
+
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "network/profile.html", {
         "user": user,
+        "followers_count": followers_count,
+        "following_count": following_count,
         "followers": followers,
         "following": following,
-        "posts": posts_with_likes,
+        "page_obj": page_obj,
     })
 
 
@@ -190,7 +201,7 @@ def following(request):
 
     posts_with_likes = get_posts_with_likes(posts, request)
 
-    paginator = Paginator(posts_with_likes, 3)
+    paginator = Paginator(posts_with_likes, 10)
 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)

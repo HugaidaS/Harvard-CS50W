@@ -23,22 +23,25 @@
                     <a href="{{ post.data.user.id }}" class="card-title">{{ post.data.user.username }}</a>
                     <p class="card-text">{{ post.data.content }}</p>
                     <p class="card-text"><small class="text-muted">{{ post.data.created_at }}</small></p>
-                    <p class="likes" data-post="{{ post.data.id }}">{{ post.likes }} likes</p>
+                    <p class="likes" data-post="{{ post.data.id }}">{{ post.likes }} like(s)</p>
                     {# Buttons block #}
-                    <div class="btn-group" role="group" aria-label="Basic example">
-                        <button class="like btn btn-primary btn-sm" data-post="{{ post.data.id }}">
-                            {% if post.is_liked_by_user %}
-                                Unlike
-                            {% else %}
-                                Like
+                
+                     {% if request.user.is_authenticated %}
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                            <button class="like btn btn-primary btn-sm" data-post="{{ post.data.id }}">
+                                {% if post.is_liked_by_user %}
+                                    Unlike
+                                {% else %}
+                                    Like
+                                {% endif %}
+                            </button>
+                        
+                            {# Edit button #}
+                            {% if post.data.user.id == request.user.id %}
+                                <button id="edit" data-post="{{ post.data.id }}" class="btn btn-secondary btn-sm">Edit</button>
                             {% endif %}
-                        </button>
-                    
-                        {# Edit button #}
-                        {% if post.data.user.id == request.user.id %}
-                            <button id="edit" data-post="{{ post.data.id }}" class="btn btn-secondary btn-sm">Edit</button>
-                        {% endif %}
-                    </div>
+                        </div>
+                     {% endif %}
                 </div>
             </div>
             

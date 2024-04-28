@@ -12,17 +12,19 @@
                     <a href="{{ post.data.user.id }}" class="card-title">{{ post.data.user.username }}</a>
                     <p class="card-text">{{ post.data.content }}</p>
                     <p class="card-text"><small class="text-muted">{{ post.data.created_at }}</small></p>
-                    <p class="likes" data-post="{{  post.data.id }}">{{ post.likes }} likes</p>
+                    <p class="likes" data-post="{{  post.data.id }}">{{ post.likes }} like(s)</p>
                     {# Buttons block #}
-                    <div class="btn-group" role="group" aria-label="Basic example">
-                        <button class="like btn btn-primary btn-sm" data-post="{{ post.data.id }}">
-                            {% if post.is_liked_by_user %}
-                                Unlike
-                            {% else %}
-                                Like
-                            {% endif %}
-                        </button>
-                    </div>
+                    {% if request.user.is_authenticated %}
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                            <button class="like btn btn-primary btn-sm" data-post="{{ post.data.id }}">
+                                {% if post.is_liked_by_user %}
+                                    Unlike
+                                {% else %}
+                                    Like
+                                {% endif %}
+                            </button>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
