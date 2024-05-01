@@ -1,6 +1,22 @@
-{% extends "mydoctorapp/layout.html" %}
+{% extends "mydoctorapp/nestedLayout.html" %}
 
-{% block body %}
-<div class="container">
-</div>
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <img src="{{ user.photo.url }}" class="img-thumbnail" alt="Profile Picture">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <p>First Name: {{ user.first_name }}</p>
+                <p>Last Name: {{ user.last_name }}</p>
+                <p>Email: {{ user.email }}</p>
+                <p>Role: {{ user.role }}</p>
+            </div>
+        </div>
+    </div>
 {% endblock %}

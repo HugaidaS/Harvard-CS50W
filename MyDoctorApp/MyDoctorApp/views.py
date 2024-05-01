@@ -1,18 +1,26 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, reverse
-from .models import User
+from django.shortcuts import render, reverse, get_object_or_404
+from .models import User, Availability
+from django.contrib.auth.decorators import login_required
+from .forms import ProfileImageForm, AvailabilityForm
 
 
+@login_required
 def index(request):
-    # check if user is authenticated
-    if request.user.is_authenticated:
-        return render(request, "mydoctorapp/index.html", {
-            "user": request.user
-        })
+    if request.method == 'POST':
+        form = ProfileImageForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse("index"))
     else:
-        return HttpResponseRedirect(reverse("login"))
+        form = ProfileImageForm(instance=request.user)
+
+    return render(request, "mydoctorapp/index.html", {
+        "user": request.user,
+        "form": form
+    })
 
 
 def login_view(request):
@@ -70,3 +78,36 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "mydoctorapp/register.html")
+
+
+def appointments(request):
+    return render(request, "mydoctorapp/appointments.html")
+
+
+def messages(request):
+    return render(request, "mydoctorapp/messages.html")
+
+
+def availability_view(request):
+    if request.method == 'POST':
+        form = AvailabilityForm(request.POST)
+        if form.is_valid():
+            availability = form.save(commit=False)
+            availability.doctor = request.user
+            availability.save()
+            # Redirect to a new URL:
+            return HttpResponseRedirect('/availability')
+    else:
+        form = AvailabilityForm()
+
+    # Get the availability data for the current user
+    availability_list = Availability.objects.filter(doctor=request.user)
+
+    return render(request, 'mydoctorapp/availability.html', {'form': form, 'availability_list': availability_list})
+
+
+def delete_availability_view(request, availability_id):
+    availability = get_object_or_404(Availability, id=availability_id)
+    if request.user == availability.doctor:
+        availability.delete()
+    return HttpResponseRedirect('/availability')

@@ -1,0 +1,24 @@
+{% extends "mydoctorapp/nestedLayout.html" %}
+
+{% block content %}
+    <h2>Set Your Availability</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.appointment_date.label_tag }} {{ form.appointment_date }}
+        {{ form.start_time.label_tag }} {{ form.start_time }}
+        {{ form.end_time.label_tag }} {{ form.end_time }}
+        <button type="submit">Save</button>
+    </form>
+
+    <h2 class="mt-5">Your Current Availability</h2>
+        {% for availability in availability_list %}
+            <ul>
+                <li>
+                    {{ availability.appointment_date }}: {{ availability.start_time }} - {{ availability.end_time }}
+                    <a href="{% url 'delete_availability' availability.id %}">Delete</a>
+                </li>
+            </ul>
+        {% empty %}
+            <h3>No availability set.</h3>
+        {% endfor %}
+{% endblock %}

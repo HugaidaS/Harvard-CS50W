@@ -1,0 +1,21 @@
+{% extends "mydoctorapp/layout.html" %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+    <div>
+        <ul class="nav nav-pills">
+            <li class="active"><a href="/" class="nav-link">Profile</a></li>
+            {% if user.role == 'doctor' %}
+                <li><a href="/availability" class="nav-link">Availability</a></li>
+            {% endif %}
+            <li><a href="/appointments" class="nav-link">Appointments</a></li>
+            <li><a href="/messages" class="nav-link">Messages</a></li>
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="mt-5">
+       {% block content %}
+       {% endblock %}
+    </div>
+{% endblock %}

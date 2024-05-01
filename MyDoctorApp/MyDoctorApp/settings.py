@@ -70,6 +70,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'MyDoctorApp.wsgi.application'
 
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

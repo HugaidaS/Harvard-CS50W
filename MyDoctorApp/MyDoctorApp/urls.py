@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +26,13 @@ urlpatterns = [
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),
     path("register", views.register, name="register"),
+
+    # API Routes
+    path("appointments", views.appointments, name="appointments"),
+    path("availability", views.availability_view, name="availability"),
+    path('availability/delete/<int:availability_id>/', views.delete_availability_view, name='delete_availability'),
+    path("messages", views.messages, name="messages"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
