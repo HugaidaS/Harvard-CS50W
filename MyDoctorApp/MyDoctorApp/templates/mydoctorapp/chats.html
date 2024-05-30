@@ -1,0 +1,21 @@
+{% extends "mydoctorapp/nestedLayout.html" %}
+
+{% block content %}
+    <div class="container">
+        <h2>Chats</h2>
+        <button id="new-message-button">Write new message</button>
+        {% if chats %}
+            <ul>
+            {% for chat in chats %}
+                <li>
+                    Doctor: {{ chat.doctor.username }} <br>
+                    Patient: {{ chat.patient.username }} <br>
+                    Created At: {{ chat.created_at }}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No chats yet</p>
+        {% endif %}
+    </div>
+{% endblock %}

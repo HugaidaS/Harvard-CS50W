@@ -31,7 +31,9 @@ urlpatterns = [
     path("appointments", views.appointments, name="appointments"),
     path("availability", views.availability_view, name="availability"),
     path('availability/delete/<int:availability_id>/', views.delete_availability_view, name='delete_availability'),
-    path("messages", views.messages, name="messages"),
+    path("chats", views.chats, name="chats"),
+    path('chats/<int:chat_id>/', views.chat, name='chat'),
+    path('chats/new/', views.chat, name='new_chat'),
 ]
 
 if settings.DEBUG:

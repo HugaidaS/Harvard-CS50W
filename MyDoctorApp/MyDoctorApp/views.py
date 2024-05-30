@@ -1,8 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
+from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, reverse, get_object_or_404
-from .models import User, Availability
+from django.shortcuts import render, reverse, get_object_or_404, redirect
+from .models import User, Availability, Appointment, Chat
 from django.contrib.auth.decorators import login_required
 from .forms import ProfileImageForm, AvailabilityForm
 
@@ -81,12 +82,48 @@ def register(request):
 
 
 def appointments(request):
-    return render(request, "mydoctorapp/appointments.html")
+    # Query all appointments
+    appointments_list = Appointment.objects.all()
+
+    # Pass the appointments to the template
+    return render(request, "mydoctorapp/appointments.html", {"appointments": appointments_list})
 
 
-def messages(request):
-    return render(request, "mydoctorapp/messages.html")
+def chats(request):
+    # Query chats involving the current user
+    chats_list = Chat.objects.filter(Q(doctor=request.user) | Q(patient=request.user))
 
+    # Pass the chats to the template
+    return render(request, "mydoctorapp/chats.html", {"chats": chats_list})
+
+
+def delete_chat(request, chat_id):
+    # Retrieve the chat
+    chat = get_object_or_404(Chat, id=chat_id)
+
+    # Check if the current user is the doctor or the patient involved in the chat
+    if request.user == chat.doctor or request.user == chat.patient:
+        # Delete the chat
+        chat.delete()
+
+    # Redirect to the chats page
+    return HttpResponseRedirect(reverse('chats'))
+
+def chat(request, chat_id=None):
+    if request.method == 'POST':
+        message_text = request.POST['message']
+        if chat_id is not None:
+            chat = get_object_or_404(Chat, id=chat_id)
+        else:
+            # Create a new chat
+            chat = Chat.objects.create(doctor=request.user, patient=request.user)
+        # Create a new message
+        Message.objects.create(chat=chat, sender=request.user, message=message_text)
+        return redirect('chat', chat_id=chat.id)
+    else:
+        chat = get_object_or_404(Chat, id=chat_id)
+        messages = chat.messages.all()
+        return render(request, 'mydoctorapp/chat.html', {'chat': chat, 'messages': messages})
 
 def availability_view(request):
     if request.method == 'POST':

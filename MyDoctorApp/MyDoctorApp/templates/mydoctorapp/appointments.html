@@ -2,6 +2,20 @@
 
 {% block content %}
     <div class="container">
-        Appointments
+        <h2>Appointments</h2>
+        {% if appointments %}
+            <ul>
+            {% for appointment in appointments %}
+                <li>
+                    Doctor: {{ appointment.doctor.username }} <br>
+                    Patient: {{ appointment.patient.username }} <br>
+                    Start Time: {{ appointment.start_time }} <br>
+                    End Time: {{ appointment.end_time }}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No scheduled appointments yet</p>
+        {% endif %}
     </div>
 {% endblock %}
