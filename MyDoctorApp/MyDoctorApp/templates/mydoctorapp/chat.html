@@ -1,0 +1,19 @@
+{% extends "mydoctorapp/nestedLayout.html" %}
+
+{% block content %}
+    <div class="container">
+        <h2>Chat with {{ chat.doctor.username }} / {{ chat.patient.username }}</h2>
+        <ul>
+        {% for message in messages %}
+            <li>
+                {{ message.sender.username }}: {{ message.message }}
+            </li>
+        {% endfor %}
+        </ul>
+        <form id="new-message-form" method="post">
+            {% csrf_token %}
+            <textarea name="message"></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+{% endblock %}
