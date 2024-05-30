@@ -8,6 +8,7 @@ class User(AbstractUser):
     # doctor or patient role
     role = models.CharField(max_length=10)
     photo = ImageField(upload_to='user_photos/', default='media/default.png')
+    saved_users = models.ManyToManyField('self', symmetrical=False, related_name='saved_by')
 
 
 class Availability(models.Model):

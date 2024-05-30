@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, reverse, get_object_or_404, redirect
-from .models import User, Availability, Appointment, Chat
+from .models import User, Availability, Appointment, Chat, Message
 from django.contrib.auth.decorators import login_required
 from .forms import ProfileImageForm, AvailabilityForm
 
@@ -109,6 +109,7 @@ def delete_chat(request, chat_id):
     # Redirect to the chats page
     return HttpResponseRedirect(reverse('chats'))
 
+
 def chat(request, chat_id=None):
     if request.method == 'POST':
         message_text = request.POST['message']
@@ -124,6 +125,7 @@ def chat(request, chat_id=None):
         chat = get_object_or_404(Chat, id=chat_id)
         messages = chat.messages.all()
         return render(request, 'mydoctorapp/chat.html', {'chat': chat, 'messages': messages})
+
 
 def availability_view(request):
     if request.method == 'POST':
@@ -148,3 +150,48 @@ def delete_availability_view(request, availability_id):
     if request.user == availability.doctor:
         availability.delete()
     return HttpResponseRedirect('/availability')
+
+
+def doctors(request):
+    current_user = User.objects.get(id=request.user.id)
+
+    if 'my' in request.path:
+        doctors_list = current_user.saved_users.all()
+    else:
+        doctors_list = User.objects.filter(role='doctor')
+    return render(request, 'mydoctorapp/doctors.html', {'doctors': doctors_list})
+
+
+def doctor(request, doctor_id):
+    doctor_record = get_object_or_404(User, id=doctor_id)
+    current_user = User.objects.get(id=request.user.id)
+    is_saved = current_user.saved_users.filter(id=doctor_id).exists()
+    return render(request, 'mydoctorapp/doctor.html', {'doctor': doctor_record, 'is_saved': is_saved})
+
+def patient(request, patient_id):
+    patient_record = get_object_or_404(User, id=patient_id)
+    return render(request, 'mydoctorapp/patient.html', {'patient': patient_record})
+
+
+def add_to_saved_users(request, user_to_save_id):
+    user_to_save = get_object_or_404(User, id=user_to_save_id)
+    current_user = User.objects.get(id=request.user.id)
+    if not current_user.saved_users.filter(id=user_to_save.id).exists():
+        current_user.saved_users.add(user_to_save)
+        return HttpResponseRedirect(reverse("index"))
+    else:
+        return render(request, "mydoctorapp/error.html", {
+            "message": "User is already in the saved users list."
+        })
+
+
+def remove_from_saved_users(request, user_to_remove_id):
+    user_to_remove = get_object_or_404(User, id=user_to_remove_id)
+    current_user = User.objects.get(id=request.user.id)
+    if current_user.saved_users.filter(id=user_to_remove.id).exists():
+        current_user.saved_users.remove(user_to_remove)
+        return HttpResponseRedirect(reverse("index"))
+    else:
+        return render(request, "mydoctorapp/error.html", {
+            "message": "User is not in the saved users list."
+        })

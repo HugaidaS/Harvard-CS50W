@@ -1,0 +1,25 @@
+{% extends "mydoctorapp/nestedLayout.html" %}
+
+{% block content %}
+    <div class="container">
+        <h2 class="mb-4">
+        {# depending on the route name display different title #}
+        {% if request.resolver_match.url_name == 'all_doctors' %}
+            All Doctors
+        {% else %}
+            My Doctors
+        {% endif %}
+        </h2>
+        <div class="list-group">
+        {% for doctor in doctors %}
+            <a href="{% url 'doctor' doctor.id %}" class="list-group-item list-group-item-action">
+                {{ doctor.first_name }} {{ doctor.last_name }}
+            </a>
+        {% empty %}
+            <div class="alert alert-info" role="alert">
+                No doctors available.
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+{% endblock %}

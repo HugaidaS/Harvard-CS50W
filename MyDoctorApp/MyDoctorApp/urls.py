@@ -34,6 +34,13 @@ urlpatterns = [
     path("chats", views.chats, name="chats"),
     path('chats/<int:chat_id>/', views.chat, name='chat'),
     path('chats/new/', views.chat, name='new_chat'),
+    path('chats/delete/<int:chat_id>/', views.delete_chat, name='delete_chat'),
+    path('all-doctors/', views.doctors, name='all_doctors'),
+    path('my-doctors/', views.doctors, name='my_doctors'),
+    path('doctor/<int:doctor_id>/', views.doctor, name='doctor'),
+    path('patient/<int:patient_id>/', views.patient, name='patient'),
+    path('add_to_saved_users/<int:user_to_save_id>/', views.add_to_saved_users, name='add_to_saved_users'),
+    path('remove_from_saved_users/<int:user_to_remove_id>/', views.remove_from_saved_users, name='remove_from_saved_users'),
 ]
 
 if settings.DEBUG:

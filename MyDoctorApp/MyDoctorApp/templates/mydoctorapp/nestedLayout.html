@@ -8,6 +8,10 @@
             {% if user.role == 'doctor' %}
                 <li><a href="/availability" class="nav-link">Availability</a></li>
             {% endif %}
+              {% if user.role == 'patient' %}
+                <li><a href="/all-doctors" class="nav-link">All Doctors</a></li>
+                <li><a href="/my-doctors" class="nav-link">My Doctors</a></li>
+            {% endif %}
             <li><a href="/appointments" class="nav-link">Appointments</a></li>
             <li><a href="/chats" class="nav-link">Chats</a></li>
         </ul>
