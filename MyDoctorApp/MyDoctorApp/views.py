@@ -1,9 +1,10 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.utils import timezone
+from datetime import datetime
 from django.shortcuts import render, reverse, get_object_or_404, redirect
-from .models import User, Availability, Appointment, Chat, Message
+from .models import User, Availability, Appointment
 from django.contrib.auth.decorators import login_required
 from .forms import ProfileImageForm, AvailabilityForm
 
@@ -84,47 +85,10 @@ def register(request):
 def appointments(request):
     # Query all appointments
     appointments_list = Appointment.objects.all()
+    userRecord = User.objects.get(id=request.user.id)
 
     # Pass the appointments to the template
-    return render(request, "mydoctorapp/appointments.html", {"appointments": appointments_list})
-
-
-def chats(request):
-    # Query chats involving the current user
-    chats_list = Chat.objects.filter(Q(doctor=request.user) | Q(patient=request.user))
-
-    # Pass the chats to the template
-    return render(request, "mydoctorapp/chats.html", {"chats": chats_list})
-
-
-def delete_chat(request, chat_id):
-    # Retrieve the chat
-    chat = get_object_or_404(Chat, id=chat_id)
-
-    # Check if the current user is the doctor or the patient involved in the chat
-    if request.user == chat.doctor or request.user == chat.patient:
-        # Delete the chat
-        chat.delete()
-
-    # Redirect to the chats page
-    return HttpResponseRedirect(reverse('chats'))
-
-
-def chat(request, chat_id=None):
-    if request.method == 'POST':
-        message_text = request.POST['message']
-        if chat_id is not None:
-            chat = get_object_or_404(Chat, id=chat_id)
-        else:
-            # Create a new chat
-            chat = Chat.objects.create(doctor=request.user, patient=request.user)
-        # Create a new message
-        Message.objects.create(chat=chat, sender=request.user, message=message_text)
-        return redirect('chat', chat_id=chat.id)
-    else:
-        chat = get_object_or_404(Chat, id=chat_id)
-        messages = chat.messages.all()
-        return render(request, 'mydoctorapp/chat.html', {'chat': chat, 'messages': messages})
+    return render(request, "mydoctorapp/appointments.html", {"appointments": appointments_list, "role": userRecord.role})
 
 
 def availability_view(request):
@@ -168,6 +132,7 @@ def doctor(request, doctor_id):
     is_saved = current_user.saved_users.filter(id=doctor_id).exists()
     return render(request, 'mydoctorapp/doctor.html', {'doctor': doctor_record, 'is_saved': is_saved})
 
+
 def patient(request, patient_id):
     patient_record = get_object_or_404(User, id=patient_id)
     return render(request, 'mydoctorapp/patient.html', {'patient': patient_record})
@@ -195,3 +160,20 @@ def remove_from_saved_users(request, user_to_remove_id):
         return render(request, "mydoctorapp/error.html", {
             "message": "User is not in the saved users list."
         })
+
+
+def book_appointment(request, doctor_id, availability_id):
+    doctorRecord = get_object_or_404(User, id=doctor_id)
+    availability = get_object_or_404(Availability, id=availability_id)
+    if availability.is_reserved:
+        return render(request, "mydoctorapp/error.html", {
+            "message": "This appointment is already reserved."
+        })
+    start_datetime = timezone.make_aware(datetime.combine(availability.appointment_date, availability.start_time))
+    end_datetime = timezone.make_aware(datetime.combine(availability.appointment_date, availability.end_time))
+    appointment = Appointment(doctor=doctorRecord, patient=request.user, start_time=start_datetime,
+                              end_time=end_datetime, availability=availability)
+    appointment.save()
+    availability.is_reserved = True
+    availability.save()
+    return HttpResponseRedirect(reverse("appointments"))

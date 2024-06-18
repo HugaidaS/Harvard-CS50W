@@ -1,19 +1,39 @@
 {% extends "mydoctorapp/nestedLayout.html" %}
 
 {% block content %}
-    <div class="container">
-        <h2>Appointments</h2>
+    <div class="container mt-5">
+        <h2 class="mb-4">Appointments</h2>
         {% if appointments %}
-            <ul>
-            {% for appointment in appointments %}
-                <li>
-                    Doctor: {{ appointment.doctor.username }} <br>
-                    Patient: {{ appointment.patient.username }} <br>
-                    Start Time: {{ appointment.start_time }} <br>
-                    End Time: {{ appointment.end_time }}
-                </li>
-            {% endfor %}
-            </ul>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        {% if role != 'doctor' %}
+                            <th scope="col">Doctor</th>
+                        {% endif %}
+                        {% if role != 'patient' %}
+                            <th scope="col">Patient</th>
+                        {% endif %}
+                        <th scope="col">Start Time</th>
+                        <th scope="col">End Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for appointment in appointments %}
+                    <tr>
+                        {% if role != 'doctor' %}
+                            <td>{{ appointment.doctor.username }}</td>
+                        {% endif %}
+                        {% if role != 'patient' %}
+                            <td>{{ appointment.patient.username }}</td>
+                        {% endif %}
+                        <td>{{ appointment.start_time }}</td>
+                        <td>{{ appointment.end_time }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
             <p>No scheduled appointments yet</p>
         {% endif %}
