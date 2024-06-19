@@ -16,19 +16,32 @@
                         {% endif %}
                         <th scope="col">Start Time</th>
                         <th scope="col">End Time</th>
+                        <th scope="col">Note</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for appointment in appointments %}
                     <tr>
                         {% if role != 'doctor' %}
-                            <td>{{ appointment.doctor.username }}</td>
+                            <td><a href="{% url 'doctor' appointment.doctor.id %}">{{ appointment.doctor.last_name }} {{ appointment.doctor.first_name }}</a></td>
                         {% endif %}
                         {% if role != 'patient' %}
-                            <td>{{ appointment.patient.username }}</td>
+                            <td><a href="{% url 'patient' appointment.patient.id %}">{{ appointment.patient.last_name }} {{ appointment.patient.first_name }}</a></td>
                         {% endif %}
                         <td>{{ appointment.start_time }}</td>
                         <td>{{ appointment.end_time }}</td>
+                        <td>{{ appointment.note }}</td>
+                        <td>{{ appointment.status }}</td>
+                        <td>
+                            {% if role == 'doctor' %}
+                                <button type="button" class="btn btn-warning">Cancel</button>
+                                <button type="button" class="btn btn-success">Close</button>
+                            {% else %}
+                                <button type="button" class="btn btn-warning">Cancel</button>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

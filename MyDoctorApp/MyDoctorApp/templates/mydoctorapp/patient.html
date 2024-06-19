@@ -2,6 +2,23 @@
 
 {% block content %}
     <div class="container">
-        <h2>Doctor</h2>
+        <div id="id-card" class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <img src="{{ patient.photo.url }}" class="img-thumbnail" alt="Profile Picture" style="width: 100%; height: auto;">
+                    </div>
+                    <div class="col-md-8">
+                        <h2>{{ patient.first_name }} {{ patient.last_name }}</h2>
+                        <p>Email: {{ patient.email }}</p>
+                        {% if is_saved %}
+                                          <a href="{% url 'remove_from_saved_users' patient.id %}" class="btn btn-danger mb-5">Remove</a>
+                        {% else %}
+                            <a href="{% url 'add_to_saved_users' patient.id %}" class="btn btn-primary mb-5">Save</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

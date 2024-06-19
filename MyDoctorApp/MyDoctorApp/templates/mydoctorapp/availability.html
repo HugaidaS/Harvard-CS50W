@@ -16,6 +16,9 @@
                 <li>
                     {{ availability.appointment_date }}: {{ availability.start_time }} - {{ availability.end_time }}
                     <a href="{% url 'delete_availability' availability.id %}">Delete</a>
+                    {% if availability.is_reserved %}
+                        <span class="text-danger">This spot has been reserved</span>
+                    {% endif %}
                 </li>
             </ul>
         {% empty %}

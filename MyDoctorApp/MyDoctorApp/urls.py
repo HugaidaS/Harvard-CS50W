@@ -33,6 +33,7 @@ urlpatterns = [
     path('availability/delete/<int:availability_id>/', views.delete_availability_view, name='delete_availability'),
     path('all-doctors/', views.doctors, name='all_doctors'),
     path('my-doctors/', views.doctors, name='my_doctors'),
+    path('my-patients/', views.patients, name='my_patients'),
     path('doctor/<int:doctor_id>/', views.doctor, name='doctor'),
     path('patient/<int:patient_id>/', views.patient, name='patient'),
     path('add_to_saved_users/<int:user_to_save_id>/', views.add_to_saved_users, name='add_to_saved_users'),

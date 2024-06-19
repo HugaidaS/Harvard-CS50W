@@ -1,0 +1,20 @@
+{% extends "mydoctorapp/nestedLayout.html" %}
+
+{% block content %}
+    <div class="container">
+        <h2 class="mb-4">
+            My patients
+        </h2>
+        <div class="list-group">
+        {% for patient in patients %}
+            <a href="{% url 'patient' patient.id %}" class="list-group-item list-group-item-action">
+                {{ patient.first_name }} {{ patient.last_name }}
+            </a>
+        {% empty %}
+            <div class="alert alert-info" role="alert">
+                Add your first patient
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+{% endblock %}

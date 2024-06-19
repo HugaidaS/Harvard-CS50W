@@ -1,10 +1,10 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.utils import timezone
 from datetime import datetime
 from django.shortcuts import render, reverse, get_object_or_404, redirect
-from .models import User, Availability, Appointment
+from .models import User, Availability, Appointment, Blacklist
 from django.contrib.auth.decorators import login_required
 from .forms import ProfileImageForm, AvailabilityForm
 
@@ -82,6 +82,7 @@ def register(request):
         return render(request, "mydoctorapp/register.html")
 
 
+@login_required
 def appointments(request):
     # Query all appointments
     appointments_list = Appointment.objects.all()
@@ -91,6 +92,7 @@ def appointments(request):
     return render(request, "mydoctorapp/appointments.html", {"appointments": appointments_list, "role": userRecord.role})
 
 
+@login_required
 def availability_view(request):
     if request.method == 'POST':
         form = AvailabilityForm(request.POST)
@@ -109,13 +111,20 @@ def availability_view(request):
     return render(request, 'mydoctorapp/availability.html', {'form': form, 'availability_list': availability_list})
 
 
+@login_required
 def delete_availability_view(request, availability_id):
     availability = get_object_or_404(Availability, id=availability_id)
     if request.user == availability.doctor:
+        try:
+            appointment = Appointment.objects.get(availability=availability)
+            appointment.delete()
+        except Appointment.DoesNotExist:
+            pass
         availability.delete()
     return HttpResponseRedirect('/availability')
 
 
+@login_required
 def doctors(request):
     current_user = User.objects.get(id=request.user.id)
 
@@ -126,6 +135,13 @@ def doctors(request):
     return render(request, 'mydoctorapp/doctors.html', {'doctors': doctors_list})
 
 
+def patients(request):
+    current_user = User.objects.get(id=request.user.id)
+    patients_list = current_user.saved_users.all()
+    return render(request, 'mydoctorapp/patients.html', {'patients': patients_list})
+
+
+@login_required
 def doctor(request, doctor_id):
     doctor_record = get_object_or_404(User, id=doctor_id)
     current_user = User.objects.get(id=request.user.id)
@@ -133,35 +149,47 @@ def doctor(request, doctor_id):
     return render(request, 'mydoctorapp/doctor.html', {'doctor': doctor_record, 'is_saved': is_saved})
 
 
+@login_required
 def patient(request, patient_id):
     patient_record = get_object_or_404(User, id=patient_id)
-    return render(request, 'mydoctorapp/patient.html', {'patient': patient_record})
+    current_user = User.objects.get(id=request.user.id)
+    is_saved = current_user.saved_users.filter(id=patient_id).exists()
+    return render(request, 'mydoctorapp/patient.html', {'patient': patient_record, 'is_saved': is_saved})
 
 
+@login_required
 def add_to_saved_users(request, user_to_save_id):
     user_to_save = get_object_or_404(User, id=user_to_save_id)
     current_user = User.objects.get(id=request.user.id)
     if not current_user.saved_users.filter(id=user_to_save.id).exists():
         current_user.saved_users.add(user_to_save)
-        return HttpResponseRedirect(reverse("index"))
+        if current_user.role == 'doctor':
+            return HttpResponseRedirect(reverse("my_patients"))
+        else:
+            return HttpResponseRedirect(reverse("my_doctors"))
     else:
         return render(request, "mydoctorapp/error.html", {
             "message": "User is already in the saved users list."
         })
 
 
+@login_required
 def remove_from_saved_users(request, user_to_remove_id):
     user_to_remove = get_object_or_404(User, id=user_to_remove_id)
     current_user = User.objects.get(id=request.user.id)
     if current_user.saved_users.filter(id=user_to_remove.id).exists():
         current_user.saved_users.remove(user_to_remove)
-        return HttpResponseRedirect(reverse("index"))
+        if current_user.role == 'doctor':
+            return HttpResponseRedirect(reverse("my_patients"))
+        else:
+            return HttpResponseRedirect(reverse("my_doctors"))
     else:
         return render(request, "mydoctorapp/error.html", {
             "message": "User is not in the saved users list."
         })
 
 
+@login_required
 def book_appointment(request, doctor_id, availability_id):
     doctorRecord = get_object_or_404(User, id=doctor_id)
     availability = get_object_or_404(Availability, id=availability_id)
@@ -177,3 +205,48 @@ def book_appointment(request, doctor_id, availability_id):
     availability.is_reserved = True
     availability.save()
     return HttpResponseRedirect(reverse("appointments"))
+
+
+@login_required
+def update_appointment_status(request, appointment_id, new_status):
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+
+    # Check if the user is authorized to update the status of the appointment
+    if request.user != appointment.doctor and request.user != appointment.patient:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    # If the user is a doctor
+    if request.user == appointment.doctor:
+        if new_status == 'Patient Absent':
+            appointment.patient.missed_appointments += 1
+            appointment.patient.save()
+
+            # If the patient has missed more than 3 appointments, add them to the blacklist
+            if appointment.patient.missed_appointments > 3:
+                Blacklist.objects.get_or_create(user=appointment.patient)
+
+        if new_status == 'Canceled':
+            note = request.POST.get('note')
+            if not note:
+                return JsonResponse({'error': 'Note is required when canceling an appointment'}, status=400)
+            appointment.note = note
+
+        if new_status == 'Happened':
+            note = request.POST.get('note')
+            if note:
+                appointment.note = note
+
+    # If the user is a patient
+    else:
+        if new_status != 'Canceled':
+            return JsonResponse({'error': 'Patients can only cancel appointments'}, status=400)
+
+        note = request.POST.get('note')
+        if not note:
+            return JsonResponse({'error': 'Note is required when canceling an appointment'}, status=400)
+        appointment.note = note
+
+    appointment.status = new_status
+    appointment.save()
+
+    return JsonResponse({'message': 'Appointment status updated successfully'}, status=200)
