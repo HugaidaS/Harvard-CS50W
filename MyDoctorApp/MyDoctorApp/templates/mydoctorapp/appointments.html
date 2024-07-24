@@ -2,7 +2,7 @@
 
 {% block content %}
     <div class="container mt-5">
-        <h2 class="mb-4">Appointments</h2>
+        <h2 class="mb-4">Appointments for {{ request.user.first_name }} {{ request.user.last_name }}</h2>
         {% if appointments %}
         <div class="table-responsive">
             <table class="table table-striped">
@@ -16,7 +16,6 @@
                         {% endif %}
                         <th scope="col">Start Time</th>
                         <th scope="col">End Time</th>
-                        <th scope="col">Note</th>
                         <th scope="col">Status</th>
                         <th scope="col">Actions</th>
                     </tr>
@@ -32,16 +31,66 @@
                         {% endif %}
                         <td>{{ appointment.start_time }}</td>
                         <td>{{ appointment.end_time }}</td>
-                        <td>{{ appointment.note }}</td>
-                        <td>{{ appointment.status }}</td>
+                        <td>Booked</td>
                         <td>
                             {% if role == 'doctor' %}
-                                <button type="button" class="btn btn-warning">Cancel</button>
-                                <button type="button" class="btn btn-success">Close</button>
+                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#statusConfirmation">Delete</button>
+                                <button type="button" class="btn btn-success" onclick="completeAppointment({{ appointment.id }})">Completed</button>
                             {% else %}
-                                <button type="button" class="btn btn-warning">Cancel</button>
+                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#penaltyWarning">Cancel</button>
                             {% endif %}
                         </td>
+                        <!-- Modal for status confirmation -->
+                        <div class="modal fade" id="statusConfirmation" tabindex="-1" role="dialog" aria-labelledby="StatusModal" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Select the status of the appointment #{{ appointment.id }}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <div class="modal-body">
+                                  <p>
+                                      Please select a status of the appointment, take into account that if you choose "Patient Absent" option, this user will receive penalty points.
+                                  </p>
+                                  <select class="custom-select custom-select-lg mb-3" id="select-status">
+                                      <option value="Patient Absent">Patient Absent</option>
+                                      <option value="Cancel">Cancel</option>
+                                 </select>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="confirm-status-selection"
+                                        onclick={confirmStatusSelection({{ appointment.id }})}>Save</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Modal for penalty warning -->
+                        <div class="modal fade" id="penaltyWarning" tabindex="-1" role="dialog" aria-labelledby="PenaltyWarningModal" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Are you sure?</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <div class="modal-body">
+                                If you cancel an appointment you will receive penalty points. When you react 3 penalty points you will be suspended from the platform for 3 months.
+                                In the case if you have a valid reason for the cancellation, please contact the doctor or support, which can cancel your appointment.
+                                <br/>
+                                  <p class="text-danger">Do you want to continue?</p>
+                              </div>
+                              <div class="modal-footer">
+                                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                      <button type="submit" class="btn btn-danger" onclick="confirmStatusSelection({{ appointment.id }})">Agree</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -50,5 +99,29 @@
         {% else %}
             <p>No scheduled appointments yet</p>
         {% endif %}
+
+
+    <script>
+        function confirmStatusSelection(id) {
+            let status = document.getElementById('select-status').value;
+            console.log(status, id);
+            fetch(`/update_appointment_status/${id}/${status}`).then(response => {
+                if (response.status === 200) {
+                    console.log('Status updated');
+                    window.location.reload();
+                }
+            });
+        }
+
+        function completeAppointment(id) {
+            console.log('Completed', id);
+            fetch(`/update_appointment_status/${id}/Completed`).then(response => {
+                if (response.status === 200) {
+                    console.log('Status updated');
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
     </div>
 {% endblock %}

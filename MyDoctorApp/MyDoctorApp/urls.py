@@ -39,6 +39,7 @@ urlpatterns = [
     path('add_to_saved_users/<int:user_to_save_id>/', views.add_to_saved_users, name='add_to_saved_users'),
     path('remove_from_saved_users/<int:user_to_remove_id>/', views.remove_from_saved_users, name='remove_from_saved_users'),
     path('book_appointment/<int:doctor_id>/<int:availability_id>/', views.book_appointment, name='book_appointment'),
+    path('update_appointment_status/<int:appointment_id>/<str:new_status>/', views.update_appointment_status, name='update_appointment_status'),
 
 ]
 

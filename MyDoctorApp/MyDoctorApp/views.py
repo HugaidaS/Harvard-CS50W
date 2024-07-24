@@ -1,10 +1,11 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
+from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.utils import timezone
 from datetime import datetime
 from django.shortcuts import render, reverse, get_object_or_404, redirect
-from .models import User, Availability, Appointment, Blacklist
+from .models import User, Availability, Appointment
 from django.contrib.auth.decorators import login_required
 from .forms import ProfileImageForm, AvailabilityForm
 
@@ -84,12 +85,14 @@ def register(request):
 
 @login_required
 def appointments(request):
-    # Query all appointments
-    appointments_list = Appointment.objects.all()
+    # Query all appointments for the current user as doctor or patient
+    appointments_list = (Appointment.objects.filter(Q(doctor=request.user) | Q(patient=request.user)))
+
     userRecord = User.objects.get(id=request.user.id)
 
     # Pass the appointments to the template
-    return render(request, "mydoctorapp/appointments.html", {"appointments": appointments_list, "role": userRecord.role})
+    return render(request, "mydoctorapp/appointments.html",
+                  {"appointments": appointments_list, "role": userRecord.role})
 
 
 @login_required
@@ -210,43 +213,32 @@ def book_appointment(request, doctor_id, availability_id):
 @login_required
 def update_appointment_status(request, appointment_id, new_status):
     appointment = get_object_or_404(Appointment, id=appointment_id)
+    user = User.objects.get(id=request.user.id)
+    availability = appointment.availability
 
     # Check if the user is authorized to update the status of the appointment
-    if request.user != appointment.doctor and request.user != appointment.patient:
+    if user != appointment.doctor and user != appointment.patient:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
     # If the user is a doctor
-    if request.user == appointment.doctor:
-        if new_status == 'Patient Absent':
-            appointment.patient.missed_appointments += 1
-            appointment.patient.save()
-
-            # If the patient has missed more than 3 appointments, add them to the blacklist
-            if appointment.patient.missed_appointments > 3:
-                Blacklist.objects.get_or_create(user=appointment.patient)
-
-        if new_status == 'Canceled':
-            note = request.POST.get('note')
-            if not note:
-                return JsonResponse({'error': 'Note is required when canceling an appointment'}, status=400)
-            appointment.note = note
-
-        if new_status == 'Happened':
-            note = request.POST.get('note')
-            if note:
-                appointment.note = note
+    if user.role == 'doctor':
+        if new_status != 'Completed':
+            if new_status == 'Patient Absent':
+                appointment.patient.missed_appointments += 1
+                appointment.patient.save()
+        availability.delete()
 
     # If the user is a patient
+    elif user.role == 'patient':
+        user.missed_appointments += 1
+        user.save()
+        availability.is_reserved = False
+        availability.save()
+
     else:
-        if new_status != 'Canceled':
-            return JsonResponse({'error': 'Patients can only cancel appointments'}, status=400)
+        return JsonResponse({'error': 'Unauthorized action.'}, status=401)
 
-        note = request.POST.get('note')
-        if not note:
-            return JsonResponse({'error': 'Note is required when canceling an appointment'}, status=400)
-        appointment.note = note
-
-    appointment.status = new_status
-    appointment.save()
+    # Delete appointment
+    appointment.delete()
 
     return JsonResponse({'message': 'Appointment status updated successfully'}, status=200)

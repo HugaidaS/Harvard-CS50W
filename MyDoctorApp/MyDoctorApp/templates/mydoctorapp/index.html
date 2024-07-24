@@ -4,7 +4,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-4">
-                <img src="{{ user.photo.url }}" class="img-thumbnail" alt="Profile Picture">
+                <img src="{{ user.photo.url }}" class="img-thumbnail w-50" alt="Profile Picture">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ form.as_p }}
@@ -16,6 +16,14 @@
                 <p>Last Name: {{ user.last_name }}</p>
                 <p>Email: {{ user.email }}</p>
                 <p>Role: {{ user.role }}</p>
+                {#       if the user is patient, show his count of missing appointments, if it is not a zero         #}
+                {% if user.role == 'patient' %}
+                    <p>Missed Appointments: {{ user.missed_appointments }}</p>
+                    <div class="alert alert-warning" role="alert">
+                      <h4 class="alert-heading">Warning!</h4>
+                      <p>If you accumulate 3 missed appointments, you will be suspended from making any appointments for 3 months.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
